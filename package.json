@@ -1,6 +1,6 @@
 {
   "name": "node-parallelizer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A Nodejs package for running code in parallel.",
   "main": "src/index.js",
   "scripts": {
