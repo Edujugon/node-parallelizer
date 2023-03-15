@@ -7,7 +7,7 @@ const fs = require('fs');
 const childFileName = "child-process-child-file.js";
 
 class ChildProcess {
-  constructor({ tmpPath = '/tmp', maxProcesses = false, processesPerCPU = 1, generateStats = false, generateChildStats = false } = {}) {
+  constructor({ tmpPath = '/tmp', maxProcesses = false, processesPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
     this.tmpPath = `${tmpPath}/${childFileName}`;
     this.childFile = null;
     this.childProcesses = [];
@@ -15,6 +15,7 @@ class ChildProcess {
     this.processesPerCPU = processesPerCPU;
 
     this.processesCount = 1;
+    this.debug = debug;
     this.generateStats = generateStats; // TODO
     this.generateChildStats = generateChildStats; // TODO
   }
@@ -35,6 +36,7 @@ class ChildProcess {
 
   _createChildProcesses = () => {
     this.processesCount = (typeof this.maxProcesses === 'number') ? this.maxProcesses : this._getProcessesCount();
+    
     for (let id = 0; id < this.processesCount; id++) {
       this.childProcesses.push(this._createFork());
     }
@@ -64,7 +66,10 @@ class ChildProcess {
 
   _processBatchesInForks = async (batches) => {
     const batchesCount = batches.length;
-    const childResponses = [];
+    const childResponses = {
+      childResponses: [],
+      failures: []
+    };
 
     let responsesReceived = 0;
 
@@ -72,13 +77,26 @@ class ChildProcess {
       for (let id = 0; id < batchesCount; id++) {
         // If a child has exited, then we recreate it.
         if (!this.childProcesses[id]?.connected) {
-          console.log(`Child #${id} no connected`);
+          logger({
+            message: `Child process #${id} no connected`,
+            params: {
+              child_id: id,
+            },
+            debug: this.debug
+          })
 
           this.childProcesses[id] = this._createFork();
         }
 
         this.childProcesses[id].on('exit', (code) => {
-          console.log(`Child process #${id} exited with code: ${code}`);
+          logger({
+            message: `Child process #${id} exited with code: ${code}`,
+            params: {
+              child_id: id,
+              exit_code: code
+            },
+            debug: this.debug
+          })
 
           // In case a child process exists without sending a message.
           if (++responsesReceived == batchesCount) {
@@ -87,17 +105,43 @@ class ChildProcess {
           }
         });
 
-        this.childProcesses[id].on('message', ({ type, logType = 'log', logMessage, reponse, status, errorMessage }) => {
+        this.childProcesses[id].on('message', ({ type, logType = 'log', childLogMessage, childLogMessageParams = {}, reponse, status, errorMessage }) => {
           if (type == 'LOG') {
-            console[logType](`Child #${id} log: `, logMessage)
+            logger({
+              message: childLogMessage,
+              params: {
+                child_id: id,
+                ...childLogMessageParams
+              },
+              debug: true,
+              logType
+            })
             return;
           }
-          console.log(`Child process #${id} status message: ${status}`);
+
+          logger({
+            message: `Child process #${id} status message: ${status}`,
+            params: {
+              child_id: id,
+              status
+            },
+            debug: this.debug
+          })
 
           if (status == 'FAILED') {
-            console.log(`Child process #${id} error message: ${errorMessage}`);
+            logger({
+              message: `Child process #${id} error message: ${errorMessage}`,
+              params: {
+                child_id: id,
+                error_message: errorMessage
+              },
+              debug: this.debug
+            })
+            childResponses.failures.push(errorMessage);
+          } else if (status == 'SUCCESS') {
+            childResponses.childResponses.push(reponse);
           }
-          childResponses.push(reponse);
+
           if (++responsesReceived == batchesCount) {
             this._removeForkEvents();
             resolve('DONE');
@@ -121,7 +165,13 @@ class ChildProcess {
     const newFork = fork(this.tmpPath);
 
     newFork.on('error', (error) => {
-      console.log(`Error on child process: ${error}`);
+      logger({
+        message: `Error on child process: ${error}`,
+        params: {
+          error
+        },
+        debug: this.debug
+      })
     })
 
     return newFork;
@@ -141,8 +191,8 @@ const findSubsets = (array, n) => {
 }
 
 const templateChildCode = `
-const mainLogger = (message, logType = 'log') => {
-  process.send({ type: "LOG", logType, logMessage: message });
+const mainLogger = ({ message, params = {}, logType = 'log' }) => {
+  process.send({ type: "LOG", logType, childLogMessage: message, childLogMessageParams: params });
 }
 
 // Listening to parent's messages.
@@ -156,4 +206,16 @@ process.on("message", async (message) => {
   }
 });
 `;
+
+const logger = ({ message, params = {}, debug = false, logType = 'log' }) => {
+  if (!debug) {
+    return
+  }
+
+  const logMsg = Object.assign({}, params);
+  logMsg.message = message;
+
+  console[logType](JSON.stringify(logMsg));
+}
+
 module.exports = ChildProcess;
