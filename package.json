@@ -1,7 +1,7 @@
 {
   "name": "node-parallelizer",
-  "version": "1.1.1",
-  "description": "A Nodejs package for running code in parallel.",
+  "version": "1.1.2",
+  "description": "A NodeJS package for running code in parallel. Initially created to provide multiprocessing in an AWS Lambda function, it can be used in any NodeJS environment.",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
