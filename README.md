@@ -1,5 +1,5 @@
 # Node Parallelizer
-A NodeJS package for running code in parallel. Initially created to provide multiprocessing in an AWS Lambda function, it can be used in any NodeJS environment.
+A NodeJS package for running code in parallel. Initially created to provide multiprocessing in an AWS Lambda function, but it can be used in any NodeJS environment.
 
 ## Supported parallelizers
 - Child Process
@@ -15,7 +15,7 @@ The package can detect the number of vCPU cores allocated to your Lambda functio
 
 It uses the Lambda function environment `/tmp` folder to create the required module that runs in the child.
 
-When you call the `createChildProcessFromFile` method outside of the Lambda handler function, it will reuse the child processes across the different invocations within a Lambda instance, improving performance. Furthermore, if the package detects a disconnection of any of the child processes, it will recreate it automatically without affecting the execution.
+When you call the `parallelizerFunction` method outside of the Lambda handler function, it will reuse the child processes across the different invocations within a Lambda instance, improving performance. Furthermore, if the package detects a disconnection of any of the child processes, it will recreate it automatically without affecting the execution.
 
 ## Installation
 To add this package to your dependency list, run:
@@ -34,7 +34,7 @@ npm i node-parallelizer --save
 - `processesPerCPU` (Number) (Default value: 1): If the `maxProcesses` is set to `false`, this parameter defines the amount of processes per CPU.
 - `debug` (Boolean) (Default value: false): Enables the internal logs for debuggin purposes.
 #### Main methods
-`createChildProcessFromFile({ filePath, processBatchFunctionName })`
+`parallelizerFunction({ filePath, processBatchFunctionName })`
 
 **Parameters**
 - `filePath` (String): The absolute path to the file that contains the function that will be executed with the subset.
@@ -65,7 +65,7 @@ const { ChildProcess } = require("node-parallelizer");
 // Creates a new child process instance.
 const childProcess = new ChildProcess();
 // Creates child processes based on your code.
-childProcess.createChildProcessFromFile({ filePath: "/var/task/src/my-child-code.js", processBatchFunctionName: 'batchProcessor' });
+childProcess.parallelizerFunction({ filePath: "/var/task/src/my-child-code.js", processBatchFunctionName: 'batchProcessor' });
 
 module.exports.handler = async(event) => {
   // Run batch in parallel
