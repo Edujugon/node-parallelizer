@@ -27,7 +27,7 @@ class ChildProcess {
     this._createChildProcesses();
   }
 
-  createChildProcessFromFile = ({ filePath, processBatchFunctionName }) => {
+  parallelizerFunction = ({ filePath, processBatchFunctionName }) => {
     const finalChildCode = `const {${processBatchFunctionName}: processBatch} = require('${filePath}'); ${templateChildCode}`
     this.childFile = this._createChildFile(finalChildCode);
 
