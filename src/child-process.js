@@ -3,12 +3,15 @@
 const { fork } = require('child_process');
 const os = require("os");
 const fs = require('fs');
+const crypto = require('crypto');
 
 const childFileName = "child-process-child-file.js";
 
 class ChildProcess {
   constructor({ tmpPath = '/tmp', maxProcesses = false, processesPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
-    this.tmpPath = `${tmpPath}/${childFileName}`;
+    const uniqueId = crypto.randomBytes(16).toString('hex');
+
+    this.tmpPath = `${tmpPath}/${childFileName}-${uniqueId}.js`;
     this.childFile = null;
     this.childProcesses = [];
     this.maxProcesses = maxProcesses;
@@ -20,29 +23,29 @@ class ChildProcess {
     this.generateChildStats = generateChildStats; // TODO
   }
 
-  createChildProcessFromCode = ({ callback, customCode = '' }) => {
+  createChildProcessFromCode({ callback, customCode = '' }) {
     const finalChildCode = `${customCode} ${templateChildCode} const processBatch = ${callback.toString()}`
     this.childFile = this._createChildFile(finalChildCode);
 
     this._createChildProcesses();
   }
 
-  parallelizerFunction = ({ filePath, processBatchFunctionName }) => {
+  parallelizerFunction({ filePath, processBatchFunctionName }) {
     const finalChildCode = `const {${processBatchFunctionName}: processBatch} = require('${filePath}'); ${templateChildCode}`
     this.childFile = this._createChildFile(finalChildCode);
 
     this._createChildProcesses();
   }
 
-  _createChildProcesses = () => {
+  _createChildProcesses() {
     this.processesCount = (typeof this.maxProcesses === 'number') ? this.maxProcesses : this._getProcessesCount();
-    
+
     for (let id = 0; id < this.processesCount; id++) {
       this.childProcesses.push(this._createFork());
     }
   }
 
-  runBatch = async (batch) => {
+  async runBatch(batch) {
     if (this.childProcesses.length === 0) {
       throw new Error('No child processes created. Please run "createChildProcesses" method before "runBatch"')
     }
@@ -57,14 +60,17 @@ class ChildProcess {
     return await this._processBatchesInForks(batches);
   }
 
-  removeChildProcesses = () => {
+  removeChildProcesses() {
     this.childProcesses.forEach(process => process.disconnect());
     this.childProcesses = [];
+    this._removeChildFile();
   }
 
-  _removeForkEvents = () => this.childProcesses.forEach(child => { child.removeAllListeners('exit'); child.removeAllListeners('message') });
+  _removeForkEvents() {
+    this.childProcesses.forEach(child => { child.removeAllListeners('exit'); child.removeAllListeners('message') });
+  }
 
-  _processBatchesInForks = async (batches) => {
+  async _processBatchesInForks(batches) {
     const batchesCount = batches.length;
     const childResponses = {
       childResponses: [],
@@ -156,12 +162,12 @@ class ChildProcess {
     return childResponses;
   }
 
-  _getProcessesCount = () => {
+  _getProcessesCount() {
     const cpuData = os.cpus();
     return cpuData.length * this.processesPerCPU;
   }
 
-  _createFork = () => {
+  _createFork() {
     const newFork = fork(this.tmpPath);
 
     newFork.on('error', (error) => {
@@ -178,7 +184,22 @@ class ChildProcess {
   }
 
   _createChildFile(childCode) {
-    fs.writeFileSync(this.tmpPath, childCode);
+    try {
+      fs.writeFileSync(this.tmpPath, childCode);
+    } catch (error) {
+      throw new Error(`Failed to create child process file: ${error.message}`);
+    }
+  }
+
+  _removeChildFile() {
+    if (!fs.existsSync(this.tmpPath))
+      return;
+
+    try {
+      fs.unlinkSync(this.tmpPath);
+    } catch (error) {
+      console.error(`Failed to remove temporary child process file: ${error.message}`);
+    }
   }
 }
 
