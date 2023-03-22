@@ -1,6 +1,6 @@
 {
   "name": "node-parallelizer",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "A NodeJS package for running code in parallel. Initially created to provide multiprocessing in an AWS Lambda function, but it can be used in any NodeJS environment.",
   "main": "src/index.js",
   "scripts": {
