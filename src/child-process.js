@@ -5,7 +5,7 @@ const os = require("os");
 const fs = require('fs');
 const crypto = require('crypto');
 
-const childFileName = "child-process-child-file.js";
+const childFileName = "child-process-child-file";
 
 class ChildProcess {
   constructor({ tmpPath = '/tmp', maxProcesses = false, processesPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
