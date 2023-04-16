@@ -5,17 +5,17 @@ const os = require("os");
 const fs = require('fs');
 const crypto = require('crypto');
 
-const childFileName = "child-process-child-file";
+const childFileName = "child-process-file";
 
 class ChildProcess {
-  constructor({ tmpPath = '/tmp', maxProcesses = false, processesPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
+  constructor({ tmpPath = '/tmp', maxParallelization = false, parallelizationPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
     const uniqueId = crypto.randomBytes(16).toString('hex');
 
     this.tmpPath = `${tmpPath}/${childFileName}-${uniqueId}.js`;
     this.childFile = null;
     this.childProcesses = [];
-    this.maxProcesses = maxProcesses;
-    this.processesPerCPU = processesPerCPU;
+    this.maxParallelization = maxParallelization;
+    this.parallelizationPerCPU = parallelizationPerCPU;
 
     this.processesCount = 1;
     this.debug = debug;
@@ -38,7 +38,7 @@ class ChildProcess {
   }
 
   _createChildProcesses() {
-    this.processesCount = (typeof this.maxProcesses === 'number') ? this.maxProcesses : this._getProcessesCount();
+    this.processesCount = (typeof this.maxParallelization === 'number') ? this.maxParallelization : this._getProcessesCount();
 
     for (let id = 0; id < this.processesCount; id++) {
       this.childProcesses.push(this._createFork());
@@ -164,7 +164,7 @@ class ChildProcess {
 
   _getProcessesCount() {
     const cpuData = os.cpus();
-    return cpuData.length * this.processesPerCPU;
+    return cpuData.length * this.parallelizationPerCPU;
   }
 
   _createFork() {
