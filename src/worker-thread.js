@@ -48,16 +48,16 @@ class WorkerThreads {
     await new Promise((resolve, reject) => {
       for (let id = 0; id < batchesCount; id++) {
         const worker = new Worker(this.tmpPath, { workerData: { id, batch: batches[id] } });
-        worker.on('error', reject);
-        worker.on('exit', (code) => {
+        worker.on('error', (error) => {
           logger({
-            message: `Worker Thread #${id} exited with code: ${code}`,
+            message: `Thread #${id} error message: ${error.message}`,
             params: {
               thread_id: id,
-              exit_code: code
+              error_message: error.message
             },
             debug: this.debug
           })
+          threadResponses.failures.push(error.message);
 
           // In case a thread exists without sending a message.
           if (++responsesReceived == batchesCount) {

@@ -3,6 +3,7 @@ const WorkerThreads = require("./worker-thread");
 
 const PARALLELIZER_CHILD = 'child-process';
 const PARALLELIZER_THREADS = 'worker-threads';
+
 class Parallelizer {
   constructor(params) {
     const parallelizer = params.type;
@@ -14,4 +15,4 @@ class Parallelizer {
     }
   }
 }
-module.exports = { ChildProcess, WorkerThreads, Parallelizer };
+module.exports = { ChildProcess, WorkerThreads, Parallelizer, PARALLELIZER_CHILD, PARALLELIZER_THREADS };
