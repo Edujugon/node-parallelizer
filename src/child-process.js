@@ -73,7 +73,7 @@ class ChildProcess {
   async _processBatchesInForks(batches) {
     const batchesCount = batches.length;
     const childResponses = {
-      childResponses: [],
+      responses: [],
       failures: []
     };
 
@@ -145,7 +145,7 @@ class ChildProcess {
             })
             childResponses.failures.push(errorMessage);
           } else if (status == 'SUCCESS') {
-            childResponses.childResponses.push(reponse);
+            childResponses.responses.push(reponse);
           }
 
           if (++responsesReceived == batchesCount) {
