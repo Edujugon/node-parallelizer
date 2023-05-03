@@ -33,7 +33,82 @@ To add this package to your dependency list, run:
 npm i node-parallelizer --save
 ```
 ## Usage
+<details>
+  <summary>Parallelizer (<b>CPU-intensive operations && I/O-intensive operations</b>)</summary>
 
+  #### Class instantiation
+`Parallelizer({ type = 'child-process', tmpPath = '/tmp', maxParallelization = false, parallelizationPerCPU = 1, debug = false })`
+
+**Parameters**
+- `type` (String) (Default value: 'child-process') (Options: 'child-process' | 'worker-threads'): The parallelizer type to be used.
+- `tmpPath` (String) (Default value: '/tmp'): The path where the module that runs in the thread will be created.
+- `maxParallelization` (Number|false) (Default value: false): The maximum number of processes/threads that will be created. If false, it is based on the CPU cores available.
+- `parallelizationPerCPU` (Number) (Default value: 1): If the `maxParallelization` is set to `false`, this parameter defines the amount of processes/threads per CPU.
+- `debug` (Boolean) (Default value: false): Enables the internal logs for debuggin purposes.
+#### Main methods
+`parallelizerFunction({ filePath, processBatchFunctionName })`
+
+**Parameters**
+- `filePath` (String): The absolute path to the file that contains the function that will be executed in parallel.
+- `processBatchFunctionName` (String): The name of the function that will be executed in parallel.
+
+`runBatch(batch)`
+
+**Parameters**
+- `batch` (Array): The records you want to process in parallel.
+
+**Returns** (Array): The thread's responses.
+#### Using worker threads parallizer in AWS Lambda.
+In this example, the repository structure looks like this
+```
+src/
+  handler.js
+  parallel.js
+serverless.yml
+package.json
+```
+
+The below snippet represents your Lambda handler
+```javascript
+// handler.js
+
+const { Parallelizer, PARALLELIZER_CHILD, PARALLELIZER_THREADS } = require("node-parallelizer");
+
+// Creates a new parallelizer instance.
+const parallelizer = new Parallelizer();
+// Creates child processes based on your code.
+parallelizer.parallelizerFunction({ type: PARALLELIZER_CHILD, filePath: "/var/task/src/parallel.js", processBatchFunctionName: 'batchProcessor' });
+
+module.exports.handler = async(event) => {
+  // Run batch in parallel
+  const responses = await parallelizer.runBatch(event.Records);
+  
+  console.log(responses);
+};
+
+```
+> Make sure to provide the filePath parameter as an absolute path. In this example, we've included '/var/task/' prefix in the path because Lambda deploys your code within that folder.
+
+The below snippet represents the code you want to run in parallel
+```javascript
+// parallel.js
+
+const batchProcessor = ({ batch }) => {
+  
+  //
+  // HERE YOUR CODE
+  //
+
+  return { success: true, count: batch.length }
+}
+
+
+module.exports = { batchProcessor }
+
+```
+> Verify that the input signature of your function (in this case, batchProcessor) includes batch as a parameter, as it contains the subset of records that a child process will handle.
+  
+</details>
 <details>
   <summary>Child Process Parallelizer (<b>I/O-intensive operations or CPU-intensive operations && I/O-intensive operations</b>)</summary>
 

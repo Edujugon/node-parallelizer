@@ -6,7 +6,7 @@ const PARALLELIZER_THREADS = 'worker-threads';
 
 class Parallelizer {
   constructor(params) {
-    const parallelizer = params.type;
+    const parallelizer = params.type || PARALLELIZER_CHILD;
 
     if(parallelizer === PARALLELIZER_CHILD) {
       return new ChildProcess(params);
