@@ -26,6 +26,8 @@ It uses the Lambda function environment `/tmp` folder to create the required mod
 
 On the Child Process Parallelizer, when you call the `parallelizerFunction` method outside of the Lambda handler function, it will reuse the child processes across the different invocations within a Lambda instance, minimazing the impact of creating child process on every invocation. Furthermore, if the package detects a disconnection of any of the child processes, it will recreate it automatically without affecting the execution.
 
+## Demostration
+![Alt text describing the image](./images/node-parallelizer-package.png)
 ## Installation
 To add this package to your dependency list, run:
 
