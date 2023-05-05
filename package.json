@@ -10,11 +10,19 @@
     "type": "git",
     "url": "git+https://github.com/Edujugon/node-parallelizer.git"
   },
-  "keywords": ["parallelizer", "Lambda parallelizer", "child process", "parallelism"],
+  "keywords": [
+    "parallelizer",
+    "Lambda parallelizer",
+    "child process",
+    "parallelism"
+  ],
   "author": "",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Edujugon/node-parallelizer/issues"
   },
-  "homepage": "https://github.com/Edujugon/node-parallelizer#readme"
+  "homepage": "https://github.com/Edujugon/node-parallelizer#readme",
+  "devDependencies": {
+    "benchmark": "^2.1.4"
+  }
 }

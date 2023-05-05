@@ -1,0 +1,37 @@
+service: my-service-using-node-parallelizer
+
+provider:
+  name: aws
+  stage: ${opt:stage, "dev"}
+  region: ${opt:region, 'us-east-2'}
+  runtime: nodejs18.x
+
+plugins:
+  - serverless-esbuild
+  - serverless-prune-plugin
+
+package:
+  individually: true
+  exclude:
+    - "**/*"
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+  prune:
+    automatic: true
+    number: 1
+
+functions:
+  lambda-parallelizer:
+    handler: src/lambda-parallelizer.handler
+    memorySize: 2000
+    timeout: 120
+    package:
+      include:
+        - src/parallelizer-code-min.js
+    environment:
+      PROCESSESPERCPU: 1
+      PARALLELIZER_TYPE: child-process
+      PARALLELIZER_DEBUG_MODE_ENABLED: false
