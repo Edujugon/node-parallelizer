@@ -1,0 +1,17 @@
+service: my-service-using-node-parallelizer
+
+provider:
+  name: aws
+  stage: ${opt:stage, "dev"}
+  region: ${opt:region, 'us-east-2'}
+  runtime: nodejs18.x
+
+functions:
+  lambda-parallelizer:
+    handler: src/lambda-parallelizer.handler
+    memorySize: 2000
+    timeout: 120
+    environment:
+      PROCESSESPERCPU: 1
+      PARALLELIZER_TYPE: child-process
+      PARALLELIZER_DEBUG_MODE_ENABLED: false

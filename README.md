@@ -28,9 +28,19 @@ On the Child Process Parallelizer, when you call the `parallelizerFunction` meth
 
 ## Demostration
 ![Alt text describing the image](./images/node-parallelizer-package.png)
-## Installation
-To add this package to your dependency list, run:
 
+## Benchmark
+```bash
+$ node test/benchmark.js
+Child Parallelizer x 12.79 ops/sec
+Thread Parallelizer x 12.51 ops/sec
+Without Parallelizer x 2.75 ops/sec
+
+Result: 
+Fastest is Child Parallelizer,Thread Parallelizer
+Slowest is Without Parallelizer
+```
+## Installation
 ```bash
 npm i node-parallelizer --save
 ```
@@ -261,6 +271,11 @@ module.exports = { batchProcessor }
 > Verify that the input signature of your function (in this case, batchProcessor) includes batch as a parameter, as it contains the subset of records that a child process will handle.
   
 </details>
+
+## Examples
+
+1. [Basic](https://github.com/Edujugon/node-parallelizer/tree/main/examples/basic)
+2. [With Bundler](https://github.com/Edujugon/node-parallelizer/tree/main/examples/with-bundler/README.md)
 
 ## Contribution
 We welcome contributions to this project. If you are interested in contributing, please feel free to submit a pull request.
