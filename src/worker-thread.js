@@ -3,26 +3,27 @@
 const { Worker } = require("worker_threads");
 const os = require("os");
 const fs = require('fs');
+const crypto = require('crypto');
 
 const workerFileName = "worker-thread-file.js";
 
 class WorkerThreads {
-  constructor({ tmpPath = '/tmp', maxParallelization = false, parallelizationPerCPU = 1, debug = false, generateStats = false, generateThreadStats = false } = {}) {
-    this.tmpPath = `${tmpPath}/${workerFileName}`;
+  constructor({ tmpPath = '/tmp', parallelization = false, parallelizationPerCPU = 1, debug = false } = {}) {
+    const uniqueId = crypto.randomBytes(16).toString('hex');
+
+    this.tmpPath = `${tmpPath}/${workerFileName}-${uniqueId}.js`;
     this.workerFile = null;
-    this.maxParallelization = maxParallelization;
+    this.parallelization = parallelization;
     this.parallelizationPerCPU = parallelizationPerCPU;
     this.threadsCount = 1;
     this.debug = debug;
-    this.generateStats = generateStats; // TODO
-    this.generateThreadStats = generateThreadStats; // TODO
   }
 
   parallelizerFunction = ({ filePath, processBatchFunctionName }) => {
     const threadCode = `const {${processBatchFunctionName}: processBatch} = require('${filePath}'); ${templateThreadCode}`
     this.workerFile = this._createWorkerFile(threadCode);
 
-    this.threadsCount = (typeof this.maxParallelization === 'number') ? this.maxParallelization : this._getThreadsCount();
+    this.threadsCount = (typeof this.parallelization === 'number') ? this.parallelization : this._getThreadsCount();
   }
 
   runBatch = async (batch) => {
@@ -34,6 +35,13 @@ class WorkerThreads {
 
     // Process the batches using the threads.
     return await this._processBatchesInThreads(batches);
+  }
+
+  removeWorkerThreads() {
+    this._removeThreadFile();
+  }
+  removeChildThreads() {
+    this._removeThreadFile();
   }
 
   _processBatchesInThreads = async (batches) => {
@@ -97,6 +105,17 @@ class WorkerThreads {
     })
 
     return threadResponses;
+  }
+
+  _removeThreadFile() {
+    if (!fs.existsSync(this.tmpPath))
+      return;
+
+    try {
+      fs.unlinkSync(this.tmpPath);
+    } catch (error) {
+      console.error(`Failed to remove temporary child process file: ${error.message}`);
+    }
   }
 
   _getThreadsCount = () => {

@@ -1,16 +1,19 @@
 const Benchmark = require('benchmark');
 const { Parallelizer, PARALLELIZER_CHILD, PARALLELIZER_THREADS } = require('../src/index');
-const { batchProcessor } = require('../examples/basic/src/parallelizer-code');
+const { batchProcessorOnlyCPU, batchProcessorOnlyIO } = require('../examples/basic/src/parallelizer-code');
 const path = require('path');
 
 
 const relativePath = '../examples/basic/src/parallelizer-code';
 const absolutePath = path.resolve(__dirname, relativePath);
 
-const childParallelizer = new Parallelizer({ type: PARALLELIZER_CHILD, parallelizationPerCPU: 1, filePath: absolutePath, processBatchFunctionName: 'batchProcessor' });
-const threadParallelizer = new Parallelizer({ type: PARALLELIZER_THREADS, parallelizationPerCPU: 1, filePath: absolutePath, processBatchFunctionName: 'batchProcessor' });
+const parallelizer = new Parallelizer([
+  { id: "only-cpu", type: PARALLELIZER_THREADS, parallelization: 4, filePath: absolutePath, processBatchFunctionName: 'batchProcessorOnlyCPU' },
+  { id: "only-io", type: PARALLELIZER_CHILD, parallelization: 4, filePath: absolutePath, processBatchFunctionName: 'batchProcessorOnlyIO' },
+]);
 
 const batch = [...Array(100).keys()];
+const batch2 = [...Array(100).keys()];
 
 
 const p = (fn) => {
@@ -26,19 +29,22 @@ const p = (fn) => {
 const suite = new Benchmark.Suite;
 // add tests
 suite
-  .add('Child Parallelizer', p(async () => {
-    await childParallelizer.run(batch);
+  .add('Child + Thread Parallelizers', p(async () => {
+    await parallelizer.run([
+      { id: "only-cpu", batch },
+      { id: "only-io", batch: batch2 },
+    ])
   }))
-  .add('Thread Parallelizer', p(async () => {
-    await threadParallelizer.run(batch);
-  }))
-  .add('Without Parallelizer', p(async () => {
-    await batchProcessor({ batch });
+  .add('JavaSCript Promise.All', p(async () => {
+    await Promise.all([
+      batchProcessorOnlyCPU({ batch }),
+      batchProcessorOnlyIO({ batch: batch2 })
+    ])
+
   }))
   // add listeners
   .on('cycle', function (event) {
-    childParallelizer.removeChildThreads();
-    threadParallelizer.removeChildThreads();
+    parallelizer.removeChildThreads();
     console.log(String(event.target));
   })
   .on('complete', function () {
