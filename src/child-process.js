@@ -8,19 +8,17 @@ const crypto = require('crypto');
 const childFileName = "child-process-file";
 
 class ChildProcess {
-  constructor({ tmpPath = '/tmp', maxParallelization = false, parallelizationPerCPU = 1, debug = false, generateStats = false, generateChildStats = false } = {}) {
+  constructor({ tmpPath = '/tmp', parallelization = false, parallelizationPerCPU = 1, debug = false } = {}) {
     const uniqueId = crypto.randomBytes(16).toString('hex');
 
     this.tmpPath = `${tmpPath}/${childFileName}-${uniqueId}.js`;
     this.childFile = null;
     this.childProcesses = [];
-    this.maxParallelization = maxParallelization;
+    this.parallelization = parallelization;
     this.parallelizationPerCPU = parallelizationPerCPU;
 
     this.processesCount = 1;
     this.debug = debug;
-    this.generateStats = generateStats; // TODO
-    this.generateChildStats = generateChildStats; // TODO
   }
 
   createChildProcessFromCode({ callback, customCode = '' }) {
@@ -38,7 +36,7 @@ class ChildProcess {
   }
 
   _createChildProcesses() {
-    this.processesCount = (typeof this.maxParallelization === 'number') ? this.maxParallelization : this._getProcessesCount();
+    this.processesCount = (typeof this.parallelization === 'number') ? this.parallelization : this._getProcessesCount();
 
     for (let id = 0; id < this.processesCount; id++) {
       this.childProcesses.push(this._createFork());
@@ -64,6 +62,10 @@ class ChildProcess {
     this.childProcesses.forEach(process => process.disconnect());
     this.childProcesses = [];
     this._removeChildFile();
+  }
+  
+  removeChildThreads() {
+    this.removeChildProcesses();
   }
 
   _removeForkEvents() {
