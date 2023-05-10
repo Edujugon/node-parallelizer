@@ -26,7 +26,7 @@ class WorkerThreads {
     this.threadsCount = (typeof this.parallelization === 'number') ? this.parallelization : this._getThreadsCount();
   }
 
-  runBatch = async (batch) => {
+  runBatch = async (batch, params = null) => {
     // Get the amount of messages per batch.
     const batchCount = (batch.length < this.threadsCount) ? 1 : batch.length / this.threadsCount;
 
@@ -34,7 +34,7 @@ class WorkerThreads {
     const batches = findSubsets(batch, batchCount);
 
     // Process the batches using the threads.
-    return await this._processBatchesInThreads(batches);
+    return await this._processBatchesInThreads(batches, params);
   }
 
   removeWorkerThreads() {
@@ -44,7 +44,7 @@ class WorkerThreads {
     this._removeThreadFile();
   }
 
-  _processBatchesInThreads = async (batches) => {
+  _processBatchesInThreads = async (batches, params = null) => {
     const batchesCount = batches.length;
     const threadResponses = {
       responses: [],
@@ -55,7 +55,7 @@ class WorkerThreads {
 
     await new Promise((resolve, reject) => {
       for (let id = 0; id < batchesCount; id++) {
-        const worker = new Worker(this.tmpPath, { workerData: { id, batch: batches[id] } });
+        const worker = new Worker(this.tmpPath, { workerData: { id, batch: batches[id], params } });
         worker.on('error', (error) => {
           logger({
             message: `Thread #${id} error message: ${error.message}`,
@@ -141,7 +141,7 @@ const { workerData, parentPort } = require("worker_threads");
 
 (async () => {
   try {
-    const reponse = await processBatch({ batch: workerData.batch });
+    const reponse = await processBatch({ batch: workerData.batch, params: workerData.params });
     parentPort.postMessage({ reponse, status: "SUCCESS" });
   } catch (err) {
     parentPort.postMessage({ status: "FAILED", errorMessage: err.toString() });

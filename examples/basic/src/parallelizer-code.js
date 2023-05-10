@@ -2,7 +2,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 
-const batchProcessor = async ({ batch }) => {
+const batchProcessor = async ({ batch, params }) => {
   let sum = 0;
 
   for (let id = 0; id <= (batch.length * 1000000); id++) {

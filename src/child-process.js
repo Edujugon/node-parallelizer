@@ -43,7 +43,7 @@ class ChildProcess {
     }
   }
 
-  async runBatch(batch) {
+  async runBatch(batch, params = null) {
     if (this.childProcesses.length === 0) {
       throw new Error('No child processes created. Please run "createChildProcesses" method before "runBatch"')
     }
@@ -55,7 +55,7 @@ class ChildProcess {
     const batches = findSubsets(batch, batchCount);
 
     // Process the batches using the child processes.
-    return await this._processBatchesInForks(batches);
+    return await this._processBatchesInForks(batches, params);
   }
 
   removeChildProcesses() {
@@ -63,7 +63,7 @@ class ChildProcess {
     this.childProcesses = [];
     this._removeChildFile();
   }
-  
+
   removeChildThreads() {
     this.removeChildProcesses();
   }
@@ -72,7 +72,7 @@ class ChildProcess {
     this.childProcesses.forEach(child => { child.removeAllListeners('exit'); child.removeAllListeners('message') });
   }
 
-  async _processBatchesInForks(batches) {
+  async _processBatchesInForks(batches, params = null) {
     const batchesCount = batches.length;
     const childResponses = {
       responses: [],
@@ -157,7 +157,7 @@ class ChildProcess {
         });
 
         // Send message to child.
-        this.childProcesses[id].send({ id, batch: batches[id] });
+        this.childProcesses[id].send({ id, batch: batches[id], params });
       }
     })
 
@@ -221,7 +221,7 @@ const mainLogger = ({ message, params = {}, logType = 'log' }) => {
 // Listening to parent's messages.
 process.on("message", async (message) => {
   try {
-    const reponse = await processBatch({ batch: message.batch, mainLogger });
+    const reponse = await processBatch({ batch: message.batch, params: message.params, mainLogger });
 
     process.send({ type: "MESSAGE", status: "SUCCESS", reponse });
   } catch (e) {

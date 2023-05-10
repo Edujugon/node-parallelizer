@@ -37,11 +37,12 @@ suite
   }))
   // add listeners
   .on('cycle', function (event) {
-    childParallelizer.removeChildThreads();
-    threadParallelizer.removeChildThreads();
     console.log(String(event.target));
   })
   .on('complete', function () {
+    childParallelizer.removeChildThreads();
+    threadParallelizer.removeChildThreads();
+    
     console.log('\nResult: ');
     console.log('Fastest is ' + this.filter('fastest').map('name'));
     console.log('Slowest is ' + this.filter('slowest').map('name'));
