@@ -1,14 +1,14 @@
 const Benchmark = require('benchmark');
 const { Parallelizer, PARALLELIZER_CHILD, PARALLELIZER_THREADS } = require('../src/index');
-const { batchProcessor } = require('../examples/basic/src/parallelizer-code');
+const { batchProcessor, batchProcessor2 } = require('../examples/basic/src/parallelizer-code');
 const path = require('path');
 
 
 const relativePath = '../examples/basic/src/parallelizer-code';
 const absolutePath = path.resolve(__dirname, relativePath);
 
-const childParallelizer = new Parallelizer({ type: PARALLELIZER_CHILD, parallelizationPerCPU: 1, filePath: absolutePath, processBatchFunctionName: 'batchProcessor' });
-const threadParallelizer = new Parallelizer({ type: PARALLELIZER_THREADS, parallelizationPerCPU: 1, filePath: absolutePath, processBatchFunctionName: 'batchProcessor' });
+const childParallelizer = new Parallelizer({ type: PARALLELIZER_CHILD, parallelizationPerCPU: 3, filePath: absolutePath, processBatchFunctionName: 'batchProcessor2' });
+const threadParallelizer = new Parallelizer({ type: PARALLELIZER_THREADS, parallelizationPerCPU: 3, filePath: absolutePath, processBatchFunctionName: 'batchProcessor2' });
 
 const batch = [...Array(100).keys()];
 
@@ -33,7 +33,7 @@ suite
     await threadParallelizer.run(batch);
   }))
   .add('Without Parallelizer', p(async () => {
-    await batchProcessor({ batch });
+    await batchProcessor2({ batch });
   }))
   // add listeners
   .on('cycle', function (event) {
@@ -42,7 +42,7 @@ suite
   .on('complete', function () {
     childParallelizer.removeChildThreads();
     threadParallelizer.removeChildThreads();
-    
+
     console.log('\nResult: ');
     console.log('Fastest is ' + this.filter('fastest').map('name'));
     console.log('Slowest is ' + this.filter('slowest').map('name'));

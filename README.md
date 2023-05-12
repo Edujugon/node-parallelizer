@@ -37,12 +37,12 @@ When you create an instance of the Child Process Parallelizer outside of the Lam
 #### CPU & I/O operations (Parallelization per CPU = 1)
 ```bash
 $ node test/benchmark.js
-Child Parallelizer x 15.08 ops/sec
-Thread Parallelizer x 31.90 ops/sec
+Child Parallelizer x 18.08 ops/sec
+Thread Parallelizer x 15.90 ops/sec
 Without Parallelizer x 2.79 ops/sec
 
 Result: 
-Fastest is Thread Parallelizer
+Fastest is Child Parallelizer
 Slowest is Without Parallelizer
 ```
 
@@ -100,10 +100,11 @@ npm i node-parallelizer --save
 - `parallelizationPerCPU` (Number) (Default value: 1): If the `parallelization` is set to `false`, this parameter defines the amount of processes/threads per CPU.
 - `debug` (Boolean) (Default value: false): Enables the internal logs for debuggin purposes.
 #### Main methods
-`run(batch)`
+`run(batch, params = null)`
 
 **Parameters**
 - `batch` (Array): The records you want to process in parallel.
+- `params` (Object) (Default value: false): Parameters that will be passed to each child/thread process.
 
 **Returns** (Array): The processes/threads' responses.
 #### Using the Node Parallizer in AWS Lambda.
@@ -173,11 +174,12 @@ module.exports = { batchProcessor }
   - `parallelizationPerCPU` (Number) (Default value: 1): If the `parallelization` is set to `false`, this parameter defines the amount of processes/threads per CPU.
   - `debug` (Boolean) (Default value: false): Enables the internal logs for debuggin purposes.
 #### Main methods
-`run([{ id: "only-cpu", batch: batchOne },{ id: "only-io", batch: batchTwo }])`
+`run([{ id: "only-cpu", batch: batchOne, params = {var: 1} },{ id: "only-io", batch: batchTwo }])`
 
 **Parameters**
 - `id` (String): The unique identifier for your Child/Thread internal instance.
 - `batch` (Array): The records you want to process in parallel.
+- `params` (Object) (Default value: false): Parameters that will be passed to each child/thread process.
 
 **Returns** (Array): A list with the processes/threads' responses.
 #### Using the Node Parallizer in AWS Lambda.
