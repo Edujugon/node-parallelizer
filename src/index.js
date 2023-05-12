@@ -39,18 +39,22 @@ class Parallelizer {
   }
 
 
-  async run(paramsList) {
+  async run(data, params = null) {
     if (Object.keys(this.childThreads).length == 1) {
-      return this.childThreads[SINGLE_CHILD_THREAD_ID].runBatch(paramsList);
+      return this.childThreads[SINGLE_CHILD_THREAD_ID].runBatch(data, params);
     }
 
-    if (!isArray(paramsList)) {
-      paramsList.id = SINGLE_CHILD_THREAD_ID;
-      paramsList = [paramsList];
+    if (!isArray(data)) {
+      data.id = SINGLE_CHILD_THREAD_ID;
+      data.params = data.params || params;
+      data = [data];
     }
 
-    return await Promise.all(paramsList.map(({ id, batch }) => {
-      return this.childThreads[id].runBatch(batch)
+    return await Promise.all(data.map(item => {
+      const batch = item.batch
+      const itemParams = item.params || params
+
+      return this.childThreads[item.id].runBatch(batch, params = itemParams)
     }));
   }
 
